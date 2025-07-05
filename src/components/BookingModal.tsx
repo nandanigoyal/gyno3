@@ -45,16 +45,16 @@ const BookingModal = ({ isOpen, onClose, doctorName, bookingType }: BookingModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#fff7f2] border-[#fde0e0] max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-[#5c3b28] flex items-center space-x-2">
+      <DialogContent className="bg-[#fff7f2] border-[#fde0e0] max-w-md mx-auto">
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-[#5c3b28] flex items-center justify-center space-x-2 text-lg">
             <span>📅</span>
             <span>Book {bookingType === "call" ? "Phone Call" : bookingType === "video" ? "Video Consultation" : "Appointment"}</span>
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="text-sm text-[#5c3b28]/70 bg-[#fde0e0] p-3 rounded-lg">
+          <div className="text-sm text-[#5c3b28]/70 bg-[#fde0e0] p-3 rounded-lg text-center">
             <span className="font-medium">👩‍⚕️ {doctorName}</span>
           </div>
 
@@ -106,8 +106,12 @@ const BookingModal = ({ isOpen, onClose, doctorName, bookingType }: BookingModal
             </Button>
           </div>
 
-          <div className="text-xs text-[#5c3b28]/60 text-center">
-            📧 Confirmation details will be sent to your registered email and phone number
+          <div className="text-xs text-[#5c3b28]/60 text-center bg-[#fde0e0] p-3 rounded-lg">
+            <div className="space-y-1">
+              <div>📧 Confirmation details will be sent to your registered email</div>
+              <div>📱 SMS reminder will be sent to your phone number</div>
+              <div>🔔 You'll receive a notification 30 minutes before your appointment</div>
+            </div>
           </div>
         </div>
       </DialogContent>
