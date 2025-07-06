@@ -23,6 +23,15 @@ const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
           {/* Navigation Buttons */}
           <div className="flex items-center space-x-2">
             <Button
+              variant="ghost"
+              className="flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium transition-all text-[#5c3b28] hover:bg-[#fde0e0]"
+              onClick={() => window.location.href = '/symptoscan'}
+            >
+              <span>🔬</span>
+              <span className="hidden sm:inline">SymptoScan</span>
+            </Button>
+            
+            <Button
               variant={activeSection === "nearby" ? "default" : "ghost"}
               onClick={() => setActiveSection("nearby")}
               className={`flex items-center space-x-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
