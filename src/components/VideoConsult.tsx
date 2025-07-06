@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import BookingModal from "./BookingModal";
 
@@ -11,23 +12,47 @@ const VideoConsult = () => {
   const [symptoms, setSymptoms] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [bookingType, setBookingType] = useState<"call" | "video" | "appointment">("video");
   const [chatMessages, setChatMessages] = useState([
-    { type: 'bot', text: 'Hi! I\'m here to help you prepare for your consultation. What brings you here today?' },
-    { type: 'user', text: 'I\'ve been having irregular periods and would like to discuss PCOS.' },
-    { type: 'bot', text: 'I understand. I\'ll connect you with our PCOS specialist. Have you had any recent tests done?' }
+    { type: 'bot', text: 'Hi! I\'m here to help you prepare for your consultation. What brings you here today?' }
   ]);
   const [currentMessage, setCurrentMessage] = useState("");
   const { toast } = useToast();
+
+  const quickQuestions = [
+    "What are your consultation fees?",
+    "How do I book an appointment?",
+    "Can I upload my medical reports?",
+    "What if I need to reschedule?",
+    "Are consultations confidential?",
+    "Do you provide prescriptions online?"
+  ];
+
+  const quickAnswers = {
+    "What are your consultation fees?": "Our video consultations start from ₹500 for 15 minutes and ₹800 for 30 minutes. In-person appointments vary by doctor and location.",
+    "How do I book an appointment?": "You can book through our app by selecting 'Find Nearby Doctors' or 'Video Consultation', choose your preferred doctor, date and time.",
+    "Can I upload my medical reports?": "Yes! You can upload reports in PDF, JPG, or PNG format during the booking process or before your consultation.",
+    "What if I need to reschedule?": "You can reschedule up to 2 hours before your appointment through the app or by calling our reception.",
+    "Are consultations confidential?": "Absolutely! All consultations are completely confidential and follow strict medical privacy guidelines.",
+    "Do you provide prescriptions online?": "Yes, our doctors can provide digital prescriptions after video consultations when medically appropriate."
+  };
 
   const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      toast({
-        title: "File uploaded successfully",
-        description: `${file.name} has been uploaded`,
-      });
+      setIsReportModalOpen(true);
+    }
+  };
+
+  const handleCancelUpload = () => {
+    setSelectedFile(null);
+    setIsReportModalOpen(false);
+    // Reset the file input
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
     }
   };
 
@@ -39,6 +64,15 @@ const VideoConsult = () => {
   const handleSchedule = () => {
     setBookingType("video");
     setIsBookingModalOpen(true);
+  };
+
+  const handleQuickQuestion = (question: string) => {
+    const answer = quickAnswers[question as keyof typeof quickAnswers];
+    setChatMessages(prev => [
+      ...prev,
+      { type: 'user', text: question },
+      { type: 'bot', text: answer }
+    ]);
   };
 
   const handleSendMessage = () => {
@@ -159,20 +193,32 @@ const VideoConsult = () => {
               <label className="block text-sm font-medium text-[#5c3b28] mb-2">
                 Upload medical reports (optional)
               </label>
-              <div className="border-2 border-dashed border-[#fde0e0] rounded-lg p-6 text-center">
-                <Input
-                  type="file"
-                  onChange={handleUpload}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <div className="text-4xl mb-2">📤</div>
-                  <p className="text-[#5c3b28]/70 text-sm">
-                    {selectedFile ? selectedFile.name : "Click to upload reports (PDF, JPG, PNG)"}
-                  </p>
-                </label>
+              <div className="space-y-3">
+                <div className="border-2 border-dashed border-[#fde0e0] rounded-lg p-6 text-center">
+                  <Input
+                    type="file"
+                    onChange={handleUpload}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="text-4xl mb-2">📤</div>
+                    <p className="text-[#5c3b28]/70 text-sm">
+                      {selectedFile ? selectedFile.name : "Click to upload reports (PDF, JPG, PNG)"}
+                    </p>
+                  </label>
+                </div>
+                
+                {selectedFile && (
+                  <Button
+                    onClick={handleCancelUpload}
+                    variant="outline"
+                    className="w-full border-[#e03131] text-[#e03131] hover:bg-[#e03131] hover:text-white rounded-full"
+                  >
+                    🗑️ Cancel Upload
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
@@ -187,6 +233,24 @@ const VideoConsult = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Quick Questions */}
+            <div className="mb-4">
+              <p className="text-sm text-[#5c3b28] font-medium mb-3">Quick Questions:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {quickQuestions.map((question) => (
+                  <Button
+                    key={question}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickQuestion(question)}
+                    className="text-xs border-[#fde0e0] text-[#5c3b28] hover:bg-[#fde0e0] rounded-full justify-start h-auto py-2 px-3"
+                  >
+                    {question}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-3 mb-4 max-h-64 overflow-y-auto bg-white p-4 rounded-lg border border-[#fde0e0]">
               {chatMessages.map((message, index) => (
                 <div
@@ -224,6 +288,50 @@ const VideoConsult = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Report Upload Confirmation Modal */}
+      <Dialog open={isReportModalOpen} onOpenChange={setIsReportModalOpen}>
+        <DialogContent className="bg-[#fff7f2] border-[#fde0e0] max-w-md mx-auto">
+          <DialogHeader className="text-center">
+            <DialogTitle className="text-[#5c3b28] flex items-center justify-center space-x-2 text-lg">
+              <span>📋</span>
+              <span>Reports Uploaded Successfully</span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 text-center">
+            <div className="text-6xl">✅</div>
+            <div className="text-[#5c3b28] space-y-2">
+              <p className="font-medium">Your medical reports have been scanned and sent to our specialist doctors.</p>
+              <p className="text-sm text-[#5c3b28]/70">
+                Our gynecology specialists will review your reports before the consultation to provide better care.
+              </p>
+            </div>
+            
+            <div className="bg-[#fde0e0] p-3 rounded-lg text-sm text-[#5c3b28]/80">
+              <p><strong>File:</strong> {selectedFile?.name}</p>
+              <p><strong>Status:</strong> Successfully uploaded and processed</p>
+              <p><strong>Domain:</strong> Gynecology & Women's Health</p>
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                onClick={handleCancelUpload}
+                variant="outline"
+                className="flex-1 border-[#e03131] text-[#e03131] hover:bg-[#e03131] hover:text-white"
+              >
+                Remove Upload
+              </Button>
+              <Button
+                onClick={() => setIsReportModalOpen(false)}
+                className="flex-1 bg-[#2f9e44] hover:bg-[#2f9e44]/90 text-white"
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BookingModal
         isOpen={isBookingModalOpen}
