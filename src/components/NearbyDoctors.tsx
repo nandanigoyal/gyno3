@@ -5,13 +5,70 @@ import { MapPin } from "lucide-react";
 import DoctorCard from "./DoctorCard";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet's default icon path
+const customIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+
 const NearbyDoctors = () => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [doctors, setDoctors] = useState([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
   const { toast } = useToast();
+
+  // 🔸 Default sample doctors for fallback
+  const defaultDoctors = [
+    {
+      id: "1",
+      name: "Dr. Neha Jain",
+      rating: 4.8,
+      clinic: "Aarogya Gynae Clinic",
+      city: "Gwalior",
+      timing: "10 AM - 1 PM",
+      speciality: "Obstetrician & Gynecologist",
+      lat: 26.2183,
+      lng: 78.1828,
+    },
+    {
+      id: "2",
+      name: "Dr. Smita Agrawal",
+      rating: 4.6,
+      clinic: "Indira IVF Hospital",
+      city: "Gwalior",
+      timing: "9:30 AM - 2 PM",
+      speciality: "IVF & Fertility Specialist",
+      lat: 26.2224,
+      lng: 78.178,
+    },
+    {
+      id: "3",
+      name: "Dr. Ritu Bhargava",
+      rating: 4.7,
+      clinic: "Bhargava Women’s Clinic",
+      city: "Gwalior",
+      timing: "5 PM - 8 PM",
+      speciality: "Endometriosis & Laparoscopy Expert",
+      lat: 26.2251,
+      lng: 78.1902,
+    },
+  ];
+
+  // Initially show default doctors
+  useEffect(() => {
+    setDoctors(defaultDoctors);
+  }, []);
 
   const handleUseLocation = () => {
     setIsLoading(true);
@@ -20,13 +77,14 @@ const NearbyDoctors = () => {
         async (position) => {
           const { latitude, longitude } = position.coords;
           setLocation({ lat: latitude, lng: longitude });
+
           toast({
             title: "Location found!",
             description: "Showing gynecologists near you",
           });
 
           try {
-            const response = await axios.get("http://localhost:8080/gynecologists", {
+            const response = await axios.get(`${API_BASE_URL}/gynecologists`, {
               params: {
                 lat: latitude,
                 lng: longitude,
@@ -34,16 +92,26 @@ const NearbyDoctors = () => {
               },
             });
 
-            setDoctors(response.data);
-          } catch (error) {
-  console.error("API error:", error); // 🛠️ Log the error details
-  toast({
-    title: "Error fetching doctors",
-    description: error.message || "Please try again later",
-    variant: "destructive",
-  });
-}
- finally {
+            const data = response.data;
+
+            if (!data || data.length === 0) {
+              toast({
+                title: "No doctors found nearby",
+                description: "Showing default sample list",
+              });
+              setDoctors(defaultDoctors);
+            } else {
+              setDoctors(data);
+            }
+          } catch (error: any) {
+            console.error("API error:", error);
+            toast({
+              title: "Error fetching doctors",
+              description: error.message || "Please try again later",
+              variant: "destructive",
+            });
+            setDoctors(defaultDoctors);
+          } finally {
             setIsLoading(false);
           }
         },
@@ -96,8 +164,7 @@ const NearbyDoctors = () => {
         </CardContent>
       </Card>
 
-
-      {/* Doctors List */}
+      {/* Doctor Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {doctors.map((doctor: any) => (
           <DoctorCard
@@ -110,27 +177,60 @@ const NearbyDoctors = () => {
               address: doctor.city,
               timings: doctor.timing,
               specialization: doctor.speciality,
-              image: "👩‍⚕️", // placeholder emoji
-              phone: "+91-9876543210", // static phone (or map via backend)
+              image: "👩‍⚕️",
+              phone: "+91-9876543210",
             }}
           />
         ))}
       </div>
 
+      {/* Map Section */}
+      <Card className="bg-[#fff7f2] border-[#fde0e0]">
+        <CardContent className="p-0">
+          {location ? (
+            <MapContainer
+              center={[location.lat, location.lng]}
+              zoom={12}
+              scrollWheelZoom={false}
+              style={{ height: "400px", width: "100%", borderRadius: "0.5rem" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
 
-      {/* Map Placeholder */}
-     <Card className="bg-[#fff7f2] border-[#fde0e0]">
-        <CardContent className="p-6">
-          <div className="bg-[#fde0e0] rounded-lg h-64 flex items-center justify-center">
-            <div className="text-center text-[#5c3b28]/70">
-              <span className="text-4xl mb-2 block">🗺️</span>
-              <p>Interactive Map View</p>
-              <small>Showing clinic locations nearby</small>
+              {/* User Marker */}
+              <Marker position={[location.lat, location.lng]} icon={customIcon}>
+                <Popup>You are here</Popup>
+              </Marker>
+
+              {/* Doctor Markers */}
+              {doctors.map((doc: any) => (
+                <Marker
+                  key={doc.id}
+                  position={[doc.lat ?? location.lat + Math.random() * 0.02, doc.lng ?? location.lng + Math.random() * 0.02]}
+                  icon={customIcon}
+                >
+                  <Popup>
+                    <strong>{doc.name}</strong><br />
+                    {doc.clinic}, {doc.city}<br />
+                    {doc.speciality}
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-[#5c3b28]/70 text-center">
+              <div>
+                <span className="text-4xl mb-2 block">📍</span>
+                <p>Map will appear once location is detected</p>
+              </div>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 };
+
 export default NearbyDoctors;
