@@ -1,64 +1,51 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import DoctorCard from "./DoctorCard";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
+const API_BASE_URL = "http://127.0.0.1:8000";
 const NearbyDoctors = () => {
-  const [location, setLocation] = useState<string>("");
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [doctors] = useState([
-    {
-      id: 1,
-      name: "Dr. Radhika Sen",
-      rating: 4.7,
-      clinic: "Lotus Women's Clinic",
-      address: "Delhi",
-      timings: "Mon-Sat, 10AM–6PM",
-      specialization: "PCOS Expert",
-      image: "👩‍⚕️",
-      phone: "+91-9876543210"
-    },
-    {
-      id: 2,
-      name: "Dr. Nidhi Kapoor",
-      rating: 4.8,
-      clinic: "Bliss Women's Hospital",
-      address: "Mumbai",
-      timings: "Mon-Fri, 9AM–5PM",
-      specialization: "Pregnancy Support",
-      image: "👩‍⚕️",
-      phone: "+91-9876543211"
-    },
-    {
-      id: 3,
-      name: "Dr. Anjali Sharma",
-      rating: 4.6,
-      clinic: "Care Women's Center",
-      address: "Bangalore",
-      timings: "Tue-Sun, 11AM–7PM",
-      specialization: "Infection Specialist",
-      image: "👩‍⚕️",
-      phone: "+91-9876543212"
-    }
-  ]);
-
+  const [doctors, setDoctors] = useState([]);
   const { toast } = useToast();
 
   const handleUseLocation = () => {
     setIsLoading(true);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
-          setLocation(`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`);
-          setIsLoading(false);
+          setLocation({ lat: latitude, lng: longitude });
           toast({
             title: "Location found!",
             description: "Showing gynecologists near you",
           });
+
+          try {
+            const response = await axios.get("http://localhost:8080/gynecologists", {
+              params: {
+                lat: latitude,
+                lng: longitude,
+                radius_km: 100,
+              },
+            });
+
+            setDoctors(response.data);
+          } catch (error) {
+  console.error("API error:", error); // 🛠️ Log the error details
+  toast({
+    title: "Error fetching doctors",
+    description: error.message || "Please try again later",
+    variant: "destructive",
+  });
+}
+ finally {
+            setIsLoading(false);
+          }
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -102,22 +89,37 @@ const NearbyDoctors = () => {
             </Button>
             {location && (
               <div className="text-sm text-[#5c3b28]/70 flex items-center">
-                📍 Current location: {location}
+                📍 Current location: {location.lat.toFixed(2)}, {location.lng.toFixed(2)}
               </div>
             )}
           </div>
         </CardContent>
       </Card>
 
+
       {/* Doctors List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {doctors.map((doctor) => (
-          <DoctorCard key={doctor.id} doctor={doctor} />
+        {doctors.map((doctor: any) => (
+          <DoctorCard
+            key={doctor.id}
+            doctor={{
+              id: doctor.id,
+              name: doctor.name,
+              rating: doctor.rating,
+              clinic: doctor.clinic,
+              address: doctor.city,
+              timings: doctor.timing,
+              specialization: doctor.speciality,
+              image: "👩‍⚕️", // placeholder emoji
+              phone: "+91-9876543210", // static phone (or map via backend)
+            }}
+          />
         ))}
       </div>
 
+
       {/* Map Placeholder */}
-      <Card className="bg-[#fff7f2] border-[#fde0e0]">
+     <Card className="bg-[#fff7f2] border-[#fde0e0]">
         <CardContent className="p-6">
           <div className="bg-[#fde0e0] rounded-lg h-64 flex items-center justify-center">
             <div className="text-center text-[#5c3b28]/70">
@@ -131,5 +133,4 @@ const NearbyDoctors = () => {
     </div>
   );
 };
-
 export default NearbyDoctors;

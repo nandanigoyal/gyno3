@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Header from "@/components/Header";
 import NearbyDoctors from "@/components/NearbyDoctors";
-import SymptomFilter from "@/components/SymptomFilter";
+// import SymptomFilter from "@/components/SymptomFilter";
 import VideoConsult from "@/components/VideoConsult";
 import HealthLibrary from "@/components/HealthLibrary";
 import Footer from "@/components/Footer";
@@ -31,7 +31,7 @@ const Index = () => {
 
           {/* Content Sections */}
           {activeSection === "nearby" && <NearbyDoctors />}
-          {activeSection === "symptoms" && <SymptomFilter />}
+          {/* {activeSection === "symptoms" && <SymptomFilter />} */}
           {activeSection === "consult" && <VideoConsult />}
           {activeSection === "library" && <HealthLibrary />}
         </div>
