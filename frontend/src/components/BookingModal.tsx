@@ -23,7 +23,7 @@ declare global {
     webkitSpeechRecognition: any;
   }
 }
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
 
 const BookingModal = ({ isOpen, onClose, doctorName, bookingType }: BookingModalProps) => {
   const [selectedDate, setSelectedDate] = useState("");
@@ -168,7 +168,8 @@ const BookingModal = ({ isOpen, onClose, doctorName, bookingType }: BookingModal
         original_symptoms: symptoms
       };
 
-      await axios.post("API_BASE_URL/api/appointments", payload);
+       const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
+      await axios.post(`${API_BASE_URL}/api/appointments`, payload);
 
       toast({
         title: "Booking Confirmed! ✅",
